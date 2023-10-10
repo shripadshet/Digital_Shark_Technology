@@ -1,255 +1,163 @@
 import React from "react";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { BsSearch } from "react-icons/bs";
-import { GiCancel } from "react-icons/gi";
+import { useState, useEffect } from "react";
+import Header from "./Header";
+import "../App.css";
+import Service from "../Services/Service";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import { Button } from "@mui/material";
+import { filteredRole } from "../Config/Constant";
+import { styled } from '@mui/material/styles';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Typography from '@mui/material/Typography';
 
-function Home() {
-  const mystyle = {
-    marginLeft: "800px",
-    marginTop: "20px",
-    fontWeight: "700",
-  };
+const BootstrapDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(2),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(1),
+  },
+}));
 
-  const [popup, setPop] = useState(false);
-  const [postDisplay, setPostDisplay] = useState(false);
-  const [formValues, setFormValues] = useState({
-    name: "",
-  });
-  const [inputFormData, setInputFormData] = useState([]);
-  const [records, setRecords] = useState([]);
-  const [searchVal, setSearchVal] = useState("");
-  const [markdown, setMarkdown] = useState("This is MarkDown");
-  const [titleErr, settitleErr] = useState(false);
-  const [descriptionErr, setdescriptionErr] = useState(false);
-
-  function loginHandle(e) {
-    if (formValues.name.length < 10 || markdown.length < 100) {
-      settitleErr(true);
-      setdescriptionErr(true);
-      alert("type correct values");
-    } else {
-      alert("all good :)");
-    }
-
-    e.preventDefault();
-  }
+function Home(props) {
+  const [userData, setUserData] = useState([]);
+  const [enteredAge, setEnteredAge] = useState(0);
+  const [selectedRole, setSelectedRole] = useState("");
+  const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
-    setPop(!popup);
+    setOpen(true);
   };
-  const closePopup = () => {
-    setPop(false);
+  const handleClose = () => {
+    setOpen(false);
   };
-  function handleClickOpenPosts() {
-    setPostDisplay(!postDisplay);
-  }
 
-  const handleChangeForm = (e) => {
-    setFormValues({ ...formValues, [e.target.name]: e.target.value });
+  const getUserDetails = () => {
+    Service.getUserData().then((res) => {
+      setUserData(res.users);
+    });
   };
-  let { name } = formValues;
-
-  function handleCreatePost(e) {
-    if (formValues.name.length < 10 || markdown.length < 100) {
-      settitleErr(true);
-      setdescriptionErr(true);
-      alert("type correct values");
-    } else {
-      alert("all good :)");
-      e.preventDefault();
-      setInputFormData([...inputFormData, { name, markdown }]);
-      setRecords([...inputFormData, { name, markdown }]);
-      setFormValues({ name: "", markdown: "" });
-      setMarkdown("");
-    }
-    settitleErr(false);
-    setdescriptionErr(false);
-  }
-  //   console.log(inputFormData);
-  //   console.log(formValues);
-  //   console.log(markdown);
-
-  const filter = (event) => {
-    setRecords(
-      inputFormData.filter(
-        (fil) =>
-          fil.markdown.toLowerCase().includes(event.target.value) ||
-          fil.name.toLowerCase().includes(event.target.value)
-      )
-    );
-    setSearchVal(event.target.value);
+  const searchHandle = async (event) => {
+    let key = event.target.value;
+    Service.searchData(key).then((res) => setUserData(res?.data));
   };
-  function clearSeach() {
-    setSearchVal("");
-  }
+  useEffect(() => {
+    getUserDetails();
+  }, []);
+  const filtered = userData?.filter((item) => {
+    return item.email === props.userMail;
+  });
 
-  console.log(records);
+  const handleChangeFilter = () => {
+    const filterVal = {
+      age: enteredAge,
+      role: selectedRole,
+    };
+    Service.filterData(filterVal).then((res) => {
+      setUserData(res?.data);
+    });
+    setOpen(false)
+  };
+
+  const handleReset = () => {
+    setEnteredAge(0);
+    setSelectedRole("");
+    getUserDetails();
+  };
+
   return (
     <>
-      <header>
-        <nav>
-          <div class="left">Shripad Portpolio</div>
-          <div class="right">
-            <ul>
-              <li>
-                <a href="/">Home</a>
-              </li>
-              <li>
-                <a href="/">About</a>
-              </li>
-              <li>
-                <a href="/">Projects</a>
-              </li>
-              <li>
-                <a href="/">Services</a>
-              </li>
-              <li>
-                <a href="/">Contact Me</a>
-              </li>
-            </ul>
-          </div>
-        </nav>
-      </header>
-      <main>
-        <section className="topSection">
-          <div className="topSearchbar">
-            <input type="search" placeholder="Search.." onChange={filter} />{" "}
-          </div>
-        </section>
-        <section className="middleSection">
-          <div>
-            {" "}
-            <button onClick={handleClickOpen}>New Post</button>{" "}
-          </div>
-          <div>
-            <button onClick={handleClickOpenPosts}>Published</button>
-          </div>
-        </section>
-
-        <section className="bottomSection">
-          <section className="leftSection">
-            {popup ? (
-              <form style={{ border: "2px solid gray" }} onSubmit={loginHandle}>
-                <label for="title">
-                  <b>Title</b>
-                </label>
-                <span style={{ marginLeft: "87%", fontSize: "2rem" }}>
-                  {" "}
-                  <button onClick={closePopup}> X</button>{" "}
-                </span>
-                <br />
-                <input
-                  type="text"
-                  placeholder="Enter Title"
-                  name="name"
-                  value={formValues.name}
-                  onChange={handleChangeForm}
-                  required
-                />
-                {titleErr ? (
-                  <div style={{ color: "red" }}>Title Not Valid</div>
-                ) : (
-                  ""
-                )}
-                <br />
-                <label for="Description">
-                  <b>Description:</b>
-                </label>
-                <div className="centerText">
-                  <textarea
-                    className="leftSide"
-                    value={markdown}
-                    onChange={(e) => setMarkdown(e.target.value)}
-                  >
-                    {" "}
-                  </textarea>
-
-                  <div>
-                    <ReactMarkdown></ReactMarkdown>
-                  </div>
-                  {descriptionErr ? (
-                    <div style={{ color: "red" }}>Description Not Valid</div>
-                  ) : (
-                    ""
-                  )}
-                </div>
-                <div style={{ marginLeft: "40%", padding: "15px" }}>
-                  <button
-                    type="submit"
-                    onClick={handleCreatePost}
-                    value="Submit"
-                  >
-                    Publish
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <></>
-            )}
-          </section>
-
-          <section class="rightSection">
-            {postDisplay ? (
-              records.map((obj, i) => {
-                <span>x</span>;
+      <Header filtered={filtered}></Header>
+      <div >
+      <input
+        type="search"
+        className="search-product-box"
+        placeholder="Search User"
+        onChange={searchHandle}
+      />
+      <Button onClick={handleClickOpen}>
+        {" "}
+        Filter <FilterAltIcon />
+      </Button>
+      </div>
+       <div>
+       
+      <BootstrapDialog
+      sx={{display:"flex" ,justifyContent:"flex-end",marginBottom:45}}
+        onClose={handleClose}
+        aria-labelledby="customized-dialog-title"
+        open={open}
+      >
+      
+        <IconButton
+          aria-label="close"
+          onClick={handleClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <DialogContent dividers>
+          <Typography gutterBottom>
+          <label>Select Role</label>
+          <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              <option>select </option>
+              {filteredRole.map((val, i) => {
                 return (
                   <>
-                    <div className="row">
-                      <div className="leftcolumn">
-                        <div className="card">
-                          <p>{obj.name}</p>
-                          <p>{obj.markdown}</p>
-                        </div>
-                      </div>
-                    </div>
+                    <option key={i} value={val}>
+                      {val}
+                    </option>
                   </>
                 );
-              })
-            ) : (
-              <></>
-            )}
-            <img src="developer-png.png" alt=""></img>
-          </section>
-        </section>
-      </main>
-      <footer>
-        <div class="footer">
-          <div class="footer-first">
-            <h3>Shripad Developer Portfollio</h3>
-          </div>
-          <div class="footer-second">
-            <ul>
-              <li>Home</li>
-              <li>Projects</li>
-              <li>Services</li>
-              <li>About</li>
-              <li>Contact Me</li>
-            </ul>
-          </div>
-          <div class="footer-third">
-            <ul>
-              <li>Home</li>
-              <li>Projects</li>
-              <li>Services</li>
-              <li>About</li>
-              <li>Contact Me</li>
-            </ul>
-          </div>
-          <div class="footer-fourth">
-            <ul>
-              <li>Home</li>
-              <li>Projects</li>
-              <li>Services</li>
-              <li>About</li>
-              <li>Contact Me</li>
-            </ul>
-          </div>
-        </div>
-        <div class="footerrights">
-          www.ShripaPortfollio.com | All rights reserved.
-        </div>
-      </footer>
+              })}
+            </select>
+          </Typography>
+          <Typography gutterBottom>
+          <label>Enter max age:</label>
+            <input
+              type="number"
+              placeholder="Enter max Value"
+              value={enteredAge}
+              onChange={(e) => setEnteredAge(e.target.value)}
+            />
+          <Button onClick={handleChangeFilter}>Apply</Button>
+          <Button onClick={handleReset}>Cancel</Button>
+          </Typography>
+        </DialogContent>
+      </BootstrapDialog>
+    </div>
+      <table className="table-container">
+        <thead>
+          <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Age</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {userData?.map((row, i) => (
+            <tr key={i}>
+              <td>{row?.firstName}</td>
+              <td>{row?.lastName}</td>
+              <td>{row?.email}</td>
+              <td>{row?.age}</td>
+              <td>{row?.role}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 }

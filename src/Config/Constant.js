@@ -1,0 +1,1 @@
+export const filteredRole = ["admin","user1","user2"];
